@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.3] - 2026-09-10
+
+### Fixed
+
+- `pi install git:...` failed on Windows: `prepare` spawned `npx`, which is an `.cmd` shim there and cannot be launched by `spawn()` without a shell (`ENOENT`). It then exited 1 silently (spawn error never logged), so pi removed the clone with no useful output. `prepare` now runs `tsc` with the running node against `node_modules/typescript/bin/tsc` (no shell, no PATH lookup) and logs spawn errors.
+
 ## [0.2.2] - 2026-09-10
 
 ### Changed
