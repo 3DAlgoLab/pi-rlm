@@ -16,9 +16,7 @@ import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 if (!existsSync(join(root, "node_modules", "typescript"))) {
-	console.error(
-		"prepare: typescript (a production dependency) is missing from node_modules — install failed?",
-	);
+	console.error("prepare: typescript (a production dependency) is missing from node_modules — install failed?");
 	process.exit(1);
 }
 
