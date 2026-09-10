@@ -8,7 +8,8 @@ npm-debug.log*
 .DS_Store
 
 # Build / cache
-dist/
+# dist/ is committed on purpose: pi's git install runs `npm install --omit=dev`
+# (no dev deps, no rebuild), so the prebuilt output must live in the repo.
 build/
 *.tsbuildinfo
 

@@ -1,0 +1,70 @@
+import { findBootstrapSnapshot, findLatestSnapshot } from "./restore.js";
+import { DEFAULT_RLM_PROMPT_MODE, findRlmPromptMode } from "./prompt-mode.js";
+import { ensureWorkspaceShape } from "./workspace.js";
+const EMPTY_SNAPSHOT = {
+    version: 1,
+    bindings: {},
+    entries: [],
+};
+function findRlmModeEnabled(ctx) {
+    const branch = ctx.sessionManager.getBranch();
+    for (let i = branch.length - 1; i >= 0; i--) {
+        const entry = branch[i];
+        if (entry.type !== "custom" || entry.customType !== "rlm-mode")
+            continue;
+        const data = entry.data;
+        return !!data?.enabled;
+    }
+    return false;
+}
+function getVarCount(snapshot) {
+    if (snapshot.entries?.length)
+        return snapshot.entries.length;
+    return Object.keys(snapshot.bindings || {}).length;
+}
+function getActiveContextRefCount(snapshot) {
+    const workspace = snapshot.bindings.workspace;
+    if (!workspace || typeof workspace !== "object" || Array.isArray(workspace))
+        return 0;
+    const normalized = ensureWorkspaceShape(workspace);
+    return normalized.activeContext?.currentArtifactRefs?.length ?? normalized.meta?.activeArtifactRefs?.length ?? 0;
+}
+export function collectRlmSessionStats(ctx, options, runtimeSnapshot) {
+    const branch = ctx.sessionManager.getBranch();
+    let execCount = 0;
+    let childQueryCount = 0;
+    let childTurns = 0;
+    let leafToolCount = 0;
+    for (const entry of branch) {
+        if (entry.type !== "message")
+            continue;
+        const message = entry.message;
+        if (message.role !== "toolResult")
+            continue;
+        if (message.toolName === "rlm_exec") {
+            execCount += 1;
+            const details = message.details;
+            childQueryCount += details?.childQueryCount ?? 0;
+            childTurns += details?.childTurns ?? 0;
+            continue;
+        }
+        if (message.toolName === "rlm_inspect" || message.toolName === "rlm_reset")
+            continue;
+        leafToolCount += 1;
+    }
+    const promptMode = findRlmPromptMode(ctx) ?? DEFAULT_RLM_PROMPT_MODE;
+    const snapshot = runtimeSnapshot ?? findLatestSnapshot(ctx) ?? findBootstrapSnapshot(ctx) ?? EMPTY_SNAPSHOT;
+    return {
+        enabled: findRlmModeEnabled(ctx),
+        promptMode,
+        depth: options.depth,
+        maxDepth: options.maxDepth,
+        execCount,
+        childQueryCount,
+        childTurns,
+        runtimeVarCount: getVarCount(snapshot),
+        activeContextRefCount: getActiveContextRefCount(snapshot),
+        leafToolCount,
+    };
+}
+//# sourceMappingURL=stats.js.map

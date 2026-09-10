@@ -49,7 +49,7 @@
 		"eval:baseline": "tsx scripts/eval.ts snapshot-baseline",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"prepare": "npm run build",
+		"prepare": "node scripts/prepare.mjs",
 		"prepublishOnly": "npm run typecheck && npm test && npm run build"
 	},
 	"pi": {
