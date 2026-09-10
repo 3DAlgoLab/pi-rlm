@@ -1,1 +1,0 @@
-{"version":3,"file":"stats.d.ts","sourceRoot":"","sources":["../../src/stats.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,gBAAgB,EAAE,MAAM,iCAAiC,CAAC;AAIxE,OAAO,KAAK,EAAiB,eAAe,EAAE,eAAe,EAAE,MAAM,YAAY,CAAC;AA+BlF,wBAAgB,sBAAsB,CACrC,GAAG,EAAE,gBAAgB,EACrB,OAAO,EAAE;IAAE,KAAK,EAAE,MAAM,CAAC;IAAC,QAAQ,EAAE,MAAM,CAAA;CAAE,EAC5C,eAAe,CAAC,EAAE,eAAe,GAC/B,eAAe,CAqCjB"}

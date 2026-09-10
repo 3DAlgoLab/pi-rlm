@@ -2,11 +2,12 @@
 // — including pi's git install flow, which runs `npm install --omit=dev`.
 //
 // pi resolves @earendil-works/* and typebox imports to host modules at runtime
-// (loader aliases), so installed copies must not install or rebuild against
-// those packages. The prebuilt `dist/` is committed instead.
+// (loader aliases), so those packages are NOT available here and must not be
+// type-checked against. We transpile only (`noCheck`): types are erased in the
+// emitted JS, and `typescript` is a real dependency so it is always present.
 //
-// We only build when dev dependencies (typescript) are actually present, i.e.
-// in a local development checkout after a full `npm install`.
+// Local development: `npm run build` / `npm run typecheck` for the full
+// type-checked output.
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -15,9 +16,14 @@ import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 if (!existsSync(join(root, "node_modules", "typescript"))) {
-	console.log("prepare: typescript not installed; skipping build (using committed dist/)");
-	process.exit(0);
+	console.error(
+		"prepare: typescript (a production dependency) is missing from node_modules — install failed?",
+	);
+	process.exit(1);
 }
 
-const result = spawnSync("npm", ["run", "build"], { cwd: root, stdio: "inherit" });
+const result = spawnSync("npx", ["--no-install", "tsc", "-p", "tsconfig.install.json"], {
+	cwd: root,
+	stdio: "inherit",
+});
 process.exit(result.status ?? 1);

@@ -1,1 +1,0 @@
-{"version":3,"file":"install.d.ts","sourceRoot":"","sources":["../../src/install.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAIX,gBAAgB,EAChB,MAAM,iCAAiC,CAAC;AAkCzC,OAAO,KAAK,EAQX,aAAa,EAOb,MAAM,YAAY,CAAC;AA6PpB,wBAAgB,yBAAyB,CAAC,OAAO,EAAE;IAClD,KAAK,EAAE,MAAM,CAAC;IACd,QAAQ,EAAE,MAAM,CAAC;IACjB,IAAI,EAAE,OAAO,CAAC;IACd,UAAU,EAAE,aAAa,CAAC;CAC1B,GAAG,gBAAgB,CAuanB"}

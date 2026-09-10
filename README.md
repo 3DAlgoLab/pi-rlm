@@ -21,7 +21,7 @@ pi install git:github.com/3DAlgoLab/pi-rlm
 Pin a tag:
 
 ```bash
-pi install git:github.com/3DAlgoLab/pi-rlm@v0.2.1
+pi install git:github.com/3DAlgoLab/pi-rlm@v0.2.2
 ```
 
 **From a local clone** (contributors or vendoring):
@@ -127,6 +127,9 @@ npm install
 npm test
 npm run build
 npm run smoke
+```
+
+Install-time build: `dist/` is not committed. `pi install git:...` runs `npm install --omit=dev`, whose `prepare` step transpiles the sources with `tsc --noCheck` (types are erased; pi resolves the `@earendil-works/*` imports itself at runtime). For local work, `npm run build` / `npm run typecheck` give you the full type-checked output.
 ```
 
 ## License

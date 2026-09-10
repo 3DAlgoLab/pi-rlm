@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2] - 2026-09-10
+
+### Changed
+
+- `dist/` is no longer committed. `pi install git:...` now transpiles from source at install time: `prepare` runs `tsc -p tsconfig.install.json` (`noCheck` — types are erased and pi resolves `@earendil-works/*` via host aliases at runtime).
+- `typescript` moved from `devDependencies` to `dependencies` so the install-time transpile is always available under `npm install --omit=dev`.
+
 ## [0.2.1] - 2026-09-10
 
 ### Fixed
