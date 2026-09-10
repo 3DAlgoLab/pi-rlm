@@ -39,7 +39,7 @@ pi install ./
 
 ```json
 {
-  "packages": ["git:github.com/3DAlgoLab/pi-rlm"]
+	"packages": ["git:github.com/3DAlgoLab/pi-rlm"]
 }
 ```
 
@@ -92,8 +92,8 @@ Or configure defaults:
 import { createRlmExtension } from "pi-turtle-rlm";
 
 export default createRlmExtension({
- maxDepth: 3,
- promptMode: "coordinator",
+	maxDepth: 3,
+	promptMode: "coordinator",
 });
 ```
 
@@ -107,10 +107,10 @@ Inside `rlm_exec`, the runtime also exposes `llmQuery(...)` for recursive child 
 
 ```ts
 await llmQuery({
- prompt: "Analyze the auth module",
- state: { files: globalThis.authFiles },
- tools: "read-only",
- budget: "medium",
+	prompt: "Analyze the auth module",
+	state: { files: globalThis.authFiles },
+	tools: "read-only",
+	budget: "medium",
 });
 ```
 

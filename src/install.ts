@@ -17,11 +17,28 @@ import {
 } from "./prompt-mode.js";
 import { parseRlmCommandAction } from "./rlm-command.js";
 import { runChildQuery } from "./recursion.js";
-import { composeRuntimeSnapshot, findBootstrapSnapshot, findLatestSnapshot, findLatestWorkspace, getSessionRuntimeKey, RLM_WORKSPACE_TYPE } from "./restore.js";
+import {
+	composeRuntimeSnapshot,
+	findBootstrapSnapshot,
+	findLatestSnapshot,
+	findLatestWorkspace,
+	getSessionRuntimeKey,
+	RLM_WORKSPACE_TYPE,
+} from "./restore.js";
 import { RuntimeManager } from "./runtime.js";
 import { collectRlmSessionStats } from "./stats.js";
-import { applyRetentionPolicy, buildRetentionCompactionSummary, DEFAULT_RLM_RETENTION_POLICY, RLM_RETENTION_TYPE } from "./context-retention.js";
-import { buildWorkspaceWorkingSetSummary, ensureWorkspaceShape, recordRetentionLease, recordRetentionMetrics } from "./workspace.js";
+import {
+	applyRetentionPolicy,
+	buildRetentionCompactionSummary,
+	DEFAULT_RLM_RETENTION_POLICY,
+	RLM_RETENTION_TYPE,
+} from "./context-retention.js";
+import {
+	buildWorkspaceWorkingSetSummary,
+	ensureWorkspaceShape,
+	recordRetentionLease,
+	recordRetentionMetrics,
+} from "./workspace.js";
 import type {
 	ExecResult,
 	GlobalsInspection,
@@ -54,7 +71,10 @@ function extractAssistantText(message: { content?: unknown }): string {
 	if (typeof content === "string") return content;
 	if (!Array.isArray(content)) return "";
 	return content
-		.filter((block): block is { type: "text"; text: string } => !!block && typeof block === "object" && block.type === "text" && typeof block.text === "string")
+		.filter(
+			(block): block is { type: "text"; text: string } =>
+				!!block && typeof block === "object" && block.type === "text" && typeof block.text === "string",
+		)
 		.map((block) => block.text)
 		.join("\n");
 }
@@ -157,7 +177,9 @@ function computeStats(ctx: ExtensionContext, options: { depth: number; maxDepth:
 }
 
 function normalizeWorkspaceBinding(value: unknown): RlmWorkspace | undefined {
-	return value && typeof value === "object" && !Array.isArray(value) ? ensureWorkspaceShape(structuredClone(value)) : undefined;
+	return value && typeof value === "object" && !Array.isArray(value)
+		? ensureWorkspaceShape(structuredClone(value))
+		: undefined;
 }
 
 function markRunningChildrenInterrupted(workspace: RlmWorkspace): RlmWorkspace {
@@ -251,10 +273,16 @@ function persistWorkspaceEntry(
 	pi.appendEntry(RLM_WORKSPACE_TYPE, { workspace: nextWorkspace });
 }
 
-function renderRlmExecResult(result: { content: Array<{ type: string; text?: string }>; details?: unknown }, options: { expanded: boolean; isPartial: boolean }, theme: any) {
+function renderRlmExecResult(
+	result: { content: Array<{ type: string; text?: string }>; details?: unknown },
+	options: { expanded: boolean; isPartial: boolean },
+	theme: any,
+) {
 	const details = result.details as RlmToolDetails | undefined;
 	const visibleChildren = details?.live?.children ?? [];
-	const childSummary = details?.childQueryCount ? ` · child ${details.childQueryCount}${details.childTurns ? `/${details.childTurns}t` : ""}` : "";
+	const childSummary = details?.childQueryCount
+		? ` · child ${details.childQueryCount}${details.childTurns ? `/${details.childTurns}t` : ""}`
+		: "";
 
 	if (options.isPartial) {
 		let text = theme.fg("warning", "Running RLM exec") + theme.fg("dim", childSummary);
@@ -313,7 +341,10 @@ export function createRlmExtensionFactory(options: {
 
 		const isRlmActive = () => !options.root || rlmModeEnabled;
 
-		const captureRetention = (messages: Parameters<typeof applyRetentionPolicy>[0], ctx: ExtensionContext): ReturnType<typeof applyRetentionPolicy> | undefined => {
+		const captureRetention = (
+			messages: Parameters<typeof applyRetentionPolicy>[0],
+			ctx: ExtensionContext,
+		): ReturnType<typeof applyRetentionPolicy> | undefined => {
 			if (!isRlmActive()) {
 				pendingRetentionEntry = undefined;
 				return undefined;
@@ -336,7 +367,12 @@ export function createRlmExtensionFactory(options: {
 		};
 
 		const emitRetentionEntry = (turnIndex: number): RlmRetentionEntry | undefined => {
-			if (!pendingRetentionEntry || pendingRetentionEntry.turnIndex !== turnIndex || emittedRetentionTurnIndex === turnIndex) return undefined;
+			if (
+				!pendingRetentionEntry ||
+				pendingRetentionEntry.turnIndex !== turnIndex ||
+				emittedRetentionTurnIndex === turnIndex
+			)
+				return undefined;
 			const entry = pendingRetentionEntry;
 			pi.appendEntry(RLM_RETENTION_TYPE, entry);
 			emittedRetentionTurnIndex = turnIndex;
@@ -517,7 +553,11 @@ export function createRlmExtensionFactory(options: {
 				return new Text(theme.fg("toolTitle", theme.bold("rlm_exec")), 0, 0);
 			},
 			renderResult(result, { expanded, isPartial }, theme) {
-				return renderRlmExecResult(result as { content: Array<{ type: string; text?: string }>; details?: unknown }, { expanded, isPartial }, theme);
+				return renderRlmExecResult(
+					result as { content: Array<{ type: string; text?: string }>; details?: unknown },
+					{ expanded, isPartial },
+					theme,
+				);
 			},
 			async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
 				const runtime = await getRuntime(manager, initializedKeys, ctx);
