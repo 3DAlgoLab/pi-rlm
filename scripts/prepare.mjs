@@ -20,8 +20,19 @@ if (!existsSync(join(root, "node_modules", "typescript"))) {
 	process.exit(1);
 }
 
-const result = spawnSync("npx", ["--no-install", "tsc", "-p", "tsconfig.install.json"], {
+// Run tsc with the running node against the bundled entry — never via `npx`:
+// on Windows npx is an npx.cmd shim and spawn() without a shell cannot launch
+// it (ENOENT), which broke pi's `npm install --omit=dev` prepare step.
+const result = spawnSync(process.execPath, [
+	join(root, "node_modules", "typescript", "bin", "tsc"),
+	"-p",
+	"tsconfig.install.json",
+], {
 	cwd: root,
 	stdio: "inherit",
 });
+if (result.error) {
+	console.error(`prepare: ${result.error.message}`);
+	process.exit(1);
+}
 process.exit(result.status ?? 1);
