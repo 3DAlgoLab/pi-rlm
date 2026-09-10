@@ -1,12 +1,12 @@
 export const RLM_PROMPT_MODE_TYPE = "rlm-prompt-mode";
 export const DEFAULT_RLM_PROMPT_MODE = "balanced";
 const MODE_LABELS = {
-    balanced: "BALANCED",
-    coordinator: "COORDINATOR",
-    aggressive: "AGGRESSIVE",
+	balanced: "BALANCED",
+	coordinator: "COORDINATOR",
+	aggressive: "AGGRESSIVE",
 };
 const MODE_APPENDICES = {
-    balanced: `
+	balanced: `
 
 RLM mode is active.
 
@@ -32,7 +32,7 @@ Coordinator rules:
 - use llmQuery({ prompt, role, state, tools, budget, output }) for semantic subproblems when useful
 - batch child work and avoid many tiny llmQuery calls
 `,
-    coordinator: `
+	coordinator: `
 
 RLM mode is active.
 
@@ -54,7 +54,7 @@ Important:
 - default child tools to read-only unless mutation is clearly needed
 - batch child work; do not spray many tiny child calls
 `,
-    aggressive: `
+	aggressive: `
 
 RLM mode is active.
 
@@ -78,24 +78,22 @@ Strong preferences:
 `,
 };
 export function isRlmPromptMode(value) {
-    return value === "balanced" || value === "coordinator" || value === "aggressive";
+	return value === "balanced" || value === "coordinator" || value === "aggressive";
 }
 export function getRlmPromptModeLabel(mode) {
-    return MODE_LABELS[mode];
+	return MODE_LABELS[mode];
 }
 export function buildRlmModeAppendix(mode) {
-    return MODE_APPENDICES[mode];
+	return MODE_APPENDICES[mode];
 }
 export function findRlmPromptMode(ctx) {
-    const branch = ctx.sessionManager.getBranch();
-    for (let i = branch.length - 1; i >= 0; i--) {
-        const entry = branch[i];
-        if (entry.type !== "custom" || entry.customType !== RLM_PROMPT_MODE_TYPE)
-            continue;
-        const data = entry.data;
-        if (data?.mode && isRlmPromptMode(data.mode))
-            return data.mode;
-    }
-    return DEFAULT_RLM_PROMPT_MODE;
+	const branch = ctx.sessionManager.getBranch();
+	for (let i = branch.length - 1; i >= 0; i--) {
+		const entry = branch[i];
+		if (entry.type !== "custom" || entry.customType !== RLM_PROMPT_MODE_TYPE) continue;
+		const data = entry.data;
+		if (data?.mode && isRlmPromptMode(data.mode)) return data.mode;
+	}
+	return DEFAULT_RLM_PROMPT_MODE;
 }
 //# sourceMappingURL=prompt-mode.js.map

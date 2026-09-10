@@ -1,141 +1,138 @@
 import { buildWorkspacePointerHints, buildWorkspaceWorkingSetSummary } from "./workspace.js";
 export const BUDGET_PRESETS = {
-    low: { maxDepth: 1, maxTurns: 3 },
-    medium: { maxDepth: 2, maxTurns: 5 },
-    high: { maxDepth: 3, maxTurns: 8 },
+	low: { maxDepth: 1, maxTurns: 3 },
+	medium: { maxDepth: 2, maxTurns: 5 },
+	high: { maxDepth: 3, maxTurns: 8 },
 };
 function cloneState(value) {
-    if (value === undefined)
-        return undefined;
-    try {
-        return structuredClone(value);
-    }
-    catch {
-        throw new Error("llmQuery.state must be structured-cloneable");
-    }
+	if (value === undefined) return undefined;
+	try {
+		return structuredClone(value);
+	} catch {
+		throw new Error("llmQuery.state must be structured-cloneable");
+	}
 }
 function normalizeBudget(budget) {
-    if (!budget)
-        return { ...BUDGET_PRESETS.medium };
-    if (typeof budget === "string")
-        return { ...BUDGET_PRESETS[budget] };
-    return {
-        maxDepth: budget.maxDepth ?? BUDGET_PRESETS.medium.maxDepth,
-        maxTurns: budget.maxTurns ?? BUDGET_PRESETS.medium.maxTurns,
-    };
+	if (!budget) return { ...BUDGET_PRESETS.medium };
+	if (typeof budget === "string") return { ...BUDGET_PRESETS[budget] };
+	return {
+		maxDepth: budget.maxDepth ?? BUDGET_PRESETS.medium.maxDepth,
+		maxTurns: budget.maxTurns ?? BUDGET_PRESETS.medium.maxTurns,
+	};
 }
 function normalizeOutput(output) {
-    return {
-        mode: output?.mode ?? "text",
-        schema: output?.schema,
-    };
+	return {
+		mode: output?.mode ?? "text",
+		schema: output?.schema,
+	};
 }
 export function normalizeLlmQueryInput(input) {
-    if (!input || typeof input !== "object" || typeof input.prompt !== "string" || !input.prompt.trim()) {
-        throw new Error("llmQuery input must be an object with a non-empty prompt");
-    }
-    return {
-        prompt: input.prompt,
-        role: input.role ?? "general",
-        state: cloneState(input.state),
-        tools: input.tools ?? "read-only",
-        budget: normalizeBudget(input.budget),
-        output: normalizeOutput(input.output),
-    };
+	if (!input || typeof input !== "object" || typeof input.prompt !== "string" || !input.prompt.trim()) {
+		throw new Error("llmQuery input must be an object with a non-empty prompt");
+	}
+	return {
+		prompt: input.prompt,
+		role: input.role ?? "general",
+		state: cloneState(input.state),
+		tools: input.tools ?? "read-only",
+		budget: normalizeBudget(input.budget),
+		output: normalizeOutput(input.output),
+	};
 }
 function buildParentStateKeyHint(state) {
-    if (!state)
-        return undefined;
-    const keys = Object.keys(state).filter((key) => typeof key === "string" && key.trim().length > 0);
-    return keys.length > 0 ? keys.slice(0, 8).join(", ") : undefined;
+	if (!state) return undefined;
+	const keys = Object.keys(state).filter((key) => typeof key === "string" && key.trim().length > 0);
+	return keys.length > 0 ? keys.slice(0, 8).join(", ") : undefined;
 }
 export function buildChildPrompt(input, context = {}) {
-    const sections = [];
-    const workingSetPointers = buildWorkspacePointerHints(context.workspace);
-    const workingSetSummary = buildWorkspaceWorkingSetSummary(context.workspace);
-    const parentStateKeys = buildParentStateKeyHint(input.state);
-    sections.push("You are a recursive RLM child node.");
-    sections.push(`Role: ${input.role}`);
-    sections.push("Runtime state access:");
-    sections.push(workingSetPointers ?? "- Durable notebook: globalThis.workspace\n- Parent-provided local state: globalThis.parentState");
-    sections.push("- Input alias: globalThis.input");
-    if (workingSetSummary) {
-        sections.push(`Active working set:\n${workingSetSummary}`);
-    }
-    if (parentStateKeys) {
-        sections.push(`Parent state keys: ${parentStateKeys}`);
-    }
-    sections.push("Rules:");
-    sections.push("- Solve only the requested subproblem.");
-    sections.push("- Inspect globalThis.workspace.activeContext first and reuse current artifact refs before rediscovering information.");
-    sections.push("- Treat prompt metadata as a pointer to runtime state, not as the full state.");
-    sections.push("- If you use rlm_exec, store reusable intermediate findings in globalThis.workspace (for example findings, files, partialOutputs, or openQuestions) before finalizing.");
-    sections.push("- Keep the final answer compact, structured, and easy for the parent to reuse.");
-    if (input.budget.maxTurns)
-        sections.push(`- Finish within ${input.budget.maxTurns} turns.`);
-    if (input.output.mode === "json") {
-        sections.push("- Return valid JSON only. Do not wrap it in markdown fences.");
-        if (input.output.schema) {
-            sections.push(`Requested JSON shape:\n${JSON.stringify(input.output.schema, null, 2)}`);
-        }
-    }
-    else {
-        sections.push("- Return only the final useful answer, without extra preamble.");
-    }
-    sections.push(`Task:\n${input.prompt}`);
-    return sections.join("\n\n");
+	const sections = [];
+	const workingSetPointers = buildWorkspacePointerHints(context.workspace);
+	const workingSetSummary = buildWorkspaceWorkingSetSummary(context.workspace);
+	const parentStateKeys = buildParentStateKeyHint(input.state);
+	sections.push("You are a recursive RLM child node.");
+	sections.push(`Role: ${input.role}`);
+	sections.push("Runtime state access:");
+	sections.push(
+		workingSetPointers ??
+			"- Durable notebook: globalThis.workspace\n- Parent-provided local state: globalThis.parentState",
+	);
+	sections.push("- Input alias: globalThis.input");
+	if (workingSetSummary) {
+		sections.push(`Active working set:\n${workingSetSummary}`);
+	}
+	if (parentStateKeys) {
+		sections.push(`Parent state keys: ${parentStateKeys}`);
+	}
+	sections.push("Rules:");
+	sections.push("- Solve only the requested subproblem.");
+	sections.push(
+		"- Inspect globalThis.workspace.activeContext first and reuse current artifact refs before rediscovering information.",
+	);
+	sections.push("- Treat prompt metadata as a pointer to runtime state, not as the full state.");
+	sections.push(
+		"- If you use rlm_exec, store reusable intermediate findings in globalThis.workspace (for example findings, files, partialOutputs, or openQuestions) before finalizing.",
+	);
+	sections.push("- Keep the final answer compact, structured, and easy for the parent to reuse.");
+	if (input.budget.maxTurns) sections.push(`- Finish within ${input.budget.maxTurns} turns.`);
+	if (input.output.mode === "json") {
+		sections.push("- Return valid JSON only. Do not wrap it in markdown fences.");
+		if (input.output.schema) {
+			sections.push(`Requested JSON shape:\n${JSON.stringify(input.output.schema, null, 2)}`);
+		}
+	} else {
+		sections.push("- Return only the final useful answer, without extra preamble.");
+	}
+	sections.push(`Task:\n${input.prompt}`);
+	return sections.join("\n\n");
 }
 function extractJsonCandidate(text) {
-    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (fenced?.[1])
-        return fenced[1].trim();
-    const startObj = text.indexOf("{");
-    const endObj = text.lastIndexOf("}");
-    if (startObj !== -1 && endObj > startObj)
-        return text.slice(startObj, endObj + 1);
-    return undefined;
+	const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+	if (fenced?.[1]) return fenced[1].trim();
+	const startObj = text.indexOf("{");
+	const endObj = text.lastIndexOf("}");
+	if (startObj !== -1 && endObj > startObj) return text.slice(startObj, endObj + 1);
+	return undefined;
 }
 export function parseChildResult(text, input, turns) {
-    const trimmed = text.trim();
-    if (input.output.mode === "json") {
-        const candidate = extractJsonCandidate(trimmed) ?? trimmed;
-        try {
-            const data = JSON.parse(candidate);
-            const summary = typeof data.summary === "string" ? data.summary : undefined;
-            return {
-                ok: true,
-                answer: trimmed,
-                summary,
-                data,
-                role: input.role,
-                usage: { turns },
-            };
-        }
-        catch {
-            return {
-                ok: false,
-                answer: trimmed,
-                role: input.role,
-                usage: { turns },
-                error: "Failed to parse JSON child output",
-            };
-        }
-    }
-    if (!trimmed) {
-        return {
-            ok: false,
-            answer: "",
-            role: input.role,
-            usage: { turns },
-            error: "Child returned empty output",
-        };
-    }
-    return {
-        ok: true,
-        answer: trimmed,
-        summary: trimmed,
-        role: input.role,
-        usage: { turns },
-    };
+	const trimmed = text.trim();
+	if (input.output.mode === "json") {
+		const candidate = extractJsonCandidate(trimmed) ?? trimmed;
+		try {
+			const data = JSON.parse(candidate);
+			const summary = typeof data.summary === "string" ? data.summary : undefined;
+			return {
+				ok: true,
+				answer: trimmed,
+				summary,
+				data,
+				role: input.role,
+				usage: { turns },
+			};
+		} catch {
+			return {
+				ok: false,
+				answer: trimmed,
+				role: input.role,
+				usage: { turns },
+				error: "Failed to parse JSON child output",
+			};
+		}
+	}
+	if (!trimmed) {
+		return {
+			ok: false,
+			answer: "",
+			role: input.role,
+			usage: { turns },
+			error: "Child returned empty output",
+		};
+	}
+	return {
+		ok: true,
+		answer: trimmed,
+		summary: trimmed,
+		role: input.role,
+		usage: { turns },
+	};
 }
 //# sourceMappingURL=llm-query.js.map

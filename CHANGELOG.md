@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] - 2026-09-10
+
+### Fixed
+
+- `pi install git:...` failed: pi runs `npm install --omit=dev`, which triggered `prepare`/`tsc` without dev deps or host-provided `@earendil-works` types. The prebuilt `dist/` is now committed and `prepare` only builds when `typescript` is installed (local dev).
+
 ## [0.2.0] - 2026-09-10
 
 ### Changed

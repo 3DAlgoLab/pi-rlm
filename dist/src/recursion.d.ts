@@ -6,16 +6,20 @@ type ChildArtifactBase = ReturnType<typeof buildChildArtifactFromBranch>;
 type ChildArtifact = RlmChildArtifact & ChildArtifactBase;
 export { BUDGET_PRESETS, buildChildPrompt, normalizeLlmQueryInput, parseChildResult };
 export declare function buildForcedFinalizePrompt(args: {
-    prompt: string;
-    artifact: ChildArtifact;
-    outputMode: "text" | "json";
-    schema?: Record<string, string>;
+	prompt: string;
+	artifact: ChildArtifact;
+	outputMode: "text" | "json";
+	schema?: Record<string, string>;
 }): string;
-export declare function runChildQuery(input: LlmQueryRequest, ctx: ExtensionContext, options: {
-    depth: number;
-    maxDepth: number;
-    extensionFactory: ExtensionFactory;
-    parentActiveTools: string[];
-    onProgress?: (event: RlmChildProgressEvent) => void;
-}): Promise<LlmQueryResult>;
+export declare function runChildQuery(
+	input: LlmQueryRequest,
+	ctx: ExtensionContext,
+	options: {
+		depth: number;
+		maxDepth: number;
+		extensionFactory: ExtensionFactory;
+		parentActiveTools: string[];
+		onProgress?: (event: RlmChildProgressEvent) => void;
+	},
+): Promise<LlmQueryResult>;
 //# sourceMappingURL=recursion.d.ts.map

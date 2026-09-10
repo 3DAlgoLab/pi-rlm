@@ -21,7 +21,7 @@ pi install git:github.com/3DAlgoLab/pi-rlm
 Pin a tag:
 
 ```bash
-pi install git:github.com/3DAlgoLab/pi-rlm@v0.2.0
+pi install git:github.com/3DAlgoLab/pi-rlm@v0.2.1
 ```
 
 **From a local clone** (contributors or vendoring):
