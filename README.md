@@ -52,6 +52,7 @@ After install, start Pi as usual from your repo; the extension loads from Pi’s
    - `/rlm balanced` | `/rlm coordinator` | `/rlm aggressive` — prompt mode
    - `/rlm inspect` — runtime globals
    - `/rlm reset` — clear runtime
+   - prompt modes explained in [Prompt modes](./docs/prompt-modes.md) — what each mode does, how to switch, and how the choice persists
 
 Or enable it from the CLI for one-shot runs. Pass the flag **after** the prompt, or with an explicit value — Pi's CLI otherwise consumes the next token as the flag's value:
 
