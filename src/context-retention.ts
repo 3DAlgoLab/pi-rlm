@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { buildWorkspacePointerHints, buildWorkspaceWorkingSetSummary } from "./workspace.js";
 import type { RlmLease, RlmRetentionMetrics, RlmRetentionPolicy, RlmWorkspace } from "./types.js";
 

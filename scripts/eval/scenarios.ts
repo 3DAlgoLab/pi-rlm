@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { EvalScenario } from "./types.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const piPackageRoot = path.join(repoRoot, "node_modules", "@mariozechner", "pi-coding-agent");
+const piPackageRoot = path.join(repoRoot, "node_modules", "@earendil-works", "pi-coding-agent");
 const piPackageJson = JSON.parse(readFileSync(path.join(piPackageRoot, "package.json"), "utf8")) as {
 	version: string;
 };

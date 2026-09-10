@@ -4,7 +4,7 @@
 
 # pi-turtle-rlm
 
-**Recursive language model runtime for [Pi](https://github.com/mariozechner/pi-coding-agent)** — a persistent JS workspace inside the agent, with structured child calls via `llmQuery`, prompt modes, and session stats.
+**Recursive language model runtime for [Pi](https://github.com/earendil-works/pi)** — a persistent JS workspace inside the agent, with structured child calls via `llmQuery`, prompt modes, and session stats.
 
 > **[Turtles all the way down](https://arxiv.org/abs/2512.24601)** — each turtle is an `llmQuery` call, each shell is `globalThis`, base case `maxDepth`, or just run out of tokens.
 
@@ -13,7 +13,7 @@
 
 ## Install
 
-**Recommended — Pi package manager** (see [Pi packages](https://github.com/mariozechner/pi-coding-agent/blob/main/docs/packages.md)):
+**Recommended — Pi package manager** (see [Pi packages](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)):
 
 ```bash
 pi install npm:pi-turtle-rlm
@@ -60,6 +60,12 @@ After install, start Pi as usual from your repo; the extension loads from Pi’s
    - `/rlm inspect` — runtime globals
    - `/rlm reset` — clear runtime
 
+Or enable it from the CLI for one-shot runs. Pass the flag **after** the prompt, or with an explicit value — Pi's CLI otherwise consumes the next token as the flag's value:
+
+```bash
+pi -p --rlm-enabled=true "prompt"
+pi -p "prompt" --rlm-enabled
+```
 When RLM is on you get a pink **RLM MODE** widget (with mode label) and footer stats: depth, `rlm_exec` count, child queries / turns, runtime variable count, and non-RLM tool calls (“leaf” count).
 
 ## Why RLM?

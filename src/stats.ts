@@ -1,4 +1,4 @@
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { findBootstrapSnapshot, findLatestSnapshot } from "./restore.js";
 import { DEFAULT_RLM_PROMPT_MODE, findRlmPromptMode } from "./prompt-mode.js";
 import { ensureWorkspaceShape } from "./workspace.js";

@@ -4,14 +4,15 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import {
 	AgentSession,
-	AuthStorage,
 	createAgentSession,
 	DefaultResourceLoader,
 	getAgentDir,
-	ModelRegistry,
+	ModelRuntime,
+	readStoredCredential,
 	SessionManager,
 	SettingsManager,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { InMemoryCredentialStore, type Credential } from "@earendil-works/pi-ai";
 import { canonicalizeProviderPayload, longestCommonPrefixChars, safeRatio } from "./eval/metrics.js";
 import { findProviderProfile, getProviderProfiles } from "./eval/provider-profiles.js";
 import { findScenario, getEvalScenarios, getPinnedPiVersion, getRepoRoot } from "./eval/scenarios.js";
@@ -185,28 +186,31 @@ async function runNativeScenario(options: NativeRunOptions): Promise<EvalRunResu
 
 	const effectiveAuthAgentDir = options.isolatedAuth ? sessionAgentDir : options.authAgentDir;
 	await mkdir(effectiveAuthAgentDir, { recursive: true });
-	const fileAuthStorage = AuthStorage.create(path.join(effectiveAuthAgentDir, "auth.json"));
-	const authStorage = AuthStorage.inMemory(fileAuthStorage.getAll());
-	const modelRegistry = ModelRegistry.create(authStorage, path.join(effectiveAuthAgentDir, "models.json"));
+	const credentials = await createEvalCredentials(path.join(effectiveAuthAgentDir, "auth.json"));
+	const modelRuntime = await ModelRuntime.create({
+		authPath: path.join(effectiveAuthAgentDir, "auth.json"),
+		modelsPath: path.join(effectiveAuthAgentDir, "models.json"),
+		credentials,
+	});
 	const settingsManager = SettingsManager.inMemory({ compaction: { enabled: false } });
 
-	const selectedModel = resolveNativeModel(modelRegistry, options, authStorage);
+	const selectedModel = await resolveNativeModel(modelRuntime, options, credentials);
 	if (!selectedModel) {
 		throw new Error(
-			`Could not resolve model ${options.modelId}. Try --model-provider <provider>. Available matching providers: ${findMatchingProviders(modelRegistry, options.modelId).join(", ") || "(none)"}`,
+			`Could not resolve model ${options.modelId}. Try --model-provider <provider>. Available matching providers: ${findMatchingProviders(modelRuntime, options.modelId).join(", ") || "(none)"}`,
 		);
 	}
 	if (options.authProviderOverride && options.authProviderOverride !== selectedModel.provider) {
-		const overrideCredential = authStorage.get(options.authProviderOverride);
+		const overrideCredential = readStoredCredential(options.authProviderOverride, path.join(effectiveAuthAgentDir, "auth.json"));
 		if (overrideCredential) {
-			authStorage.set(selectedModel.provider, overrideCredential);
+			await credentials.modify(selectedModel.provider, async () => overrideCredential);
 		}
 	}
 	if (options.reasoning && selectedModel.reasoning === false) {
 		// keep going, but make it visible in logs later via selected model metadata
 	}
 	if (options.apiKeySource) {
-		authStorage.setRuntimeApiKey(selectedModel.provider, resolveConfigValueLikePi(options.apiKeySource));
+		await modelRuntime.setRuntimeApiKey(selectedModel.provider, resolveConfigValueLikePi(options.apiKeySource));
 	}
 
 	const resolvedSubjectEntrypoint = path.resolve(subjectEntrypoint);
@@ -237,8 +241,7 @@ async function runNativeScenario(options: NativeRunOptions): Promise<EvalRunResu
 		const created = await createAgentSession({
 			cwd: options.scenario.cwd,
 			model: selectedModel,
-			authStorage,
-			modelRegistry,
+			modelRuntime,
 			resourceLoader,
 			settingsManager,
 			sessionManager: SessionManager.inMemory(options.scenario.cwd),
@@ -409,7 +412,7 @@ async function runNativeScenario(options: NativeRunOptions): Promise<EvalRunResu
 		};
 	} finally {
 		try {
-			await session?.extensionRunner?.emit({ type: "session_shutdown" });
+			await session?.extensionRunner?.emit({ type: "session_shutdown", reason: "quit" });
 		} catch {
 			// ignore shutdown errors
 		}
@@ -423,34 +426,49 @@ async function runNativeScenario(options: NativeRunOptions): Promise<EvalRunResu
 	}
 }
 
-function resolveNativeModel(modelRegistry: ModelRegistry, options: NativeRunOptions, authStorage: AuthStorage) {
+async function resolveNativeModel(modelRuntime: ModelRuntime, options: NativeRunOptions, credentials: InMemoryCredentialStore) {
 	if (options.modelProviderOverride) {
-		return modelRegistry.find(options.modelProviderOverride, options.modelId);
+		return modelRuntime.getModel(options.modelProviderOverride, options.modelId);
 	}
 	if (options.authProviderOverride) {
-		const exact = modelRegistry.find(options.authProviderOverride, options.modelId);
+		const exact = modelRuntime.getModel(options.authProviderOverride, options.modelId);
 		if (exact) return exact;
-		const authAliasExists = authStorage.has(options.authProviderOverride);
+		const authAliasExists = modelRuntime.hasConfiguredAuth(options.authProviderOverride);
 		if (!authAliasExists) {
-			const available = findMatchingProviders(modelRegistry, options.modelId);
+			const available = findMatchingProviders(modelRuntime, options.modelId);
+			const aliases = (await credentials.list()).map((entry) => entry.providerId);
 			throw new Error(
-				`Auth provider override ${options.authProviderOverride} is neither a registered provider for model ${options.modelId} nor an available auth alias. Available matching providers: ${available.join(", ") || "(none)"}. Available auth aliases: ${authStorage.list().join(", ") || "(none)"}`,
+				`Auth provider override ${options.authProviderOverride} is neither a registered provider for model ${options.modelId} nor an available auth alias. Available matching providers: ${available.join(", ") || "(none)"}. Available auth aliases: ${aliases.join(", ") || "(none)"}`,
 			);
 		}
 	}
 	for (const provider of options.providerProfile.authProviderCandidates ?? [options.providerProfile.providerName]) {
-		const exact = modelRegistry.find(provider, options.modelId);
+		const exact = modelRuntime.getModel(provider, options.modelId);
 		if (exact) return exact;
 	}
-	const matches = modelRegistry.getAll().filter((model) => model.id === options.modelId);
+	const matches = [...modelRuntime.getModels()].filter((model) => model.id === options.modelId);
 	if (matches.length === 1) return matches[0];
-	const authed = matches.filter((model) => authStorage.hasAuth(model.provider));
+	const authed = matches.filter((model) => modelRuntime.hasConfiguredAuth(model.provider));
 	if (authed.length === 1) return authed[0];
 	return undefined;
 }
 
-function findMatchingProviders(modelRegistry: ModelRegistry, modelId: string): string[] {
-	return Array.from(new Set(modelRegistry.getAll().filter((model) => model.id === modelId).map((model) => model.provider))).sort();
+async function createEvalCredentials(authPath: string): Promise<InMemoryCredentialStore> {
+	const credentials = new InMemoryCredentialStore();
+	let data: Record<string, Credential> = {};
+	try {
+		data = JSON.parse(await readFile(authPath, "utf8")) as Record<string, Credential>;
+	} catch {
+		// no auth file yet: start from an empty store
+	}
+	for (const [provider, credential] of Object.entries(data)) {
+		await credentials.modify(provider, async () => credential);
+	}
+	return credentials;
+}
+
+function findMatchingProviders(modelRuntime: ModelRuntime, modelId: string): string[] {
+	return Array.from(new Set([...modelRuntime.getModels()].filter((model) => model.id === modelId).map((model) => model.provider))).sort();
 }
 
 function inferProviderProfileId(

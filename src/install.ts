@@ -5,9 +5,9 @@ import type {
 	ExtensionCommandContext,
 	ExtensionContext,
 	ExtensionFactory,
-} from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+} from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
+import { Type } from "typebox";
 import {
 	buildRlmModeAppendix,
 	DEFAULT_RLM_PROMPT_MODE,

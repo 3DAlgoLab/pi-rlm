@@ -1,21 +1,12 @@
 import {
 	createAgentSession,
-	createBashTool,
-	createCodingTools,
-	createEditTool,
-	createFindTool,
-	createGrepTool,
-	createLsTool,
-	createReadOnlyTools,
-	createReadTool,
-	createWriteTool,
 	DefaultResourceLoader,
+	getAgentDir,
 	SessionManager,
 	type CreateAgentSessionOptions,
 	type ExtensionContext,
 	type ExtensionFactory,
-} from "@mariozechner/pi-coding-agent";
-import type { AgentTool } from "@mariozechner/pi-agent-core";
+} from "@earendil-works/pi-coding-agent";
 import { BUDGET_PRESETS, buildChildPrompt, normalizeLlmQueryInput, parseChildResult } from "./llm-query.js";
 import { buildChildArtifactFromBranch, composeRuntimeSnapshot, RLM_RUNTIME_TYPE, RLM_WORKSPACE_TYPE } from "./restore.js";
 import { buildWorkspacePointerHints, buildWorkspaceWorkingSetSummary, ensureWorkspaceShape, splitInternalLlmQueryContext } from "./workspace.js";
@@ -66,32 +57,8 @@ function resolveBuiltInToolNames(mode: LlmQueryTools | undefined, parentActiveTo
 	return filtered.length > 0 ? filtered : [...READ_ONLY_TOOL_NAMES];
 }
 
-function buildBuiltInTools(cwd: string, names: RlmBuiltInToolName[]): AgentTool<any>[] {
-	const unique = Array.from(new Set(names));
-	if (unique.length === READ_ONLY_TOOL_NAMES.length && unique.every((name) => READ_ONLY_TOOL_NAMES.includes(name))) {
-		return createReadOnlyTools(cwd);
-	}
-	if (unique.length === CODING_TOOL_NAMES.length && CODING_TOOL_NAMES.every((name) => unique.includes(name))) {
-		return createCodingTools(cwd);
-	}
-	return unique.map((name) => {
-		switch (name) {
-			case "read":
-				return createReadTool(cwd);
-			case "bash":
-				return createBashTool(cwd);
-			case "edit":
-				return createEditTool(cwd);
-			case "write":
-				return createWriteTool(cwd);
-			case "grep":
-				return createGrepTool(cwd);
-			case "find":
-				return createFindTool(cwd);
-			case "ls":
-				return createLsTool(cwd);
-		}
-	});
+function resolveBuiltInToolSet(names: RlmBuiltInToolName[]): string[] {
+	return Array.from(new Set(names));
 }
 
 export { BUDGET_PRESETS, buildChildPrompt, normalizeLlmQueryInput, parseChildResult };
@@ -196,7 +163,7 @@ async function runChildSession(args: {
 	ctx: ExtensionContext;
 	extensionFactory: ExtensionFactory;
 	sessionManager: SessionManager;
-	tools: AgentTool<any>[];
+	toolNames: string[];
 	prompt: string;
 	childId: string;
 	maxTurns: number;
@@ -204,6 +171,7 @@ async function runChildSession(args: {
 }): Promise<ChildSessionRun> {
 	const loader = new DefaultResourceLoader({
 		cwd: args.ctx.cwd,
+		agentDir: getAgentDir(),
 		extensionFactories: [args.extensionFactory],
 	});
 	await loader.reload();
@@ -212,7 +180,7 @@ async function runChildSession(args: {
 		cwd: args.ctx.cwd,
 		sessionManager: args.sessionManager,
 		resourceLoader: loader,
-		tools: args.tools,
+		tools: args.toolNames,
 	};
 	if (args.ctx.model) createOptions.model = args.ctx.model;
 
@@ -350,15 +318,14 @@ export async function runChildQuery(
 		const primarySessionManager = SessionManager.inMemory(ctx.cwd);
 		seedSessionManager(primarySessionManager, { state: normalized.state, workspace: parentWorkspace });
 
-		const builtInToolNames = resolveBuiltInToolNames(normalized.tools, options.parentActiveTools);
-		const builtInTools = buildBuiltInTools(ctx.cwd, builtInToolNames);
+		const builtInToolNames = resolveBuiltInToolSet(resolveBuiltInToolNames(normalized.tools, options.parentActiveTools));
 		const maxTurns = normalized.budget.maxTurns ?? BUDGET_PRESETS.medium.maxTurns!;
 
 		const primary = await runChildSession({
 			ctx,
 			extensionFactory: options.extensionFactory,
 			sessionManager: primarySessionManager,
-			tools: builtInTools,
+			toolNames: builtInToolNames,
 			prompt: buildChildPrompt(normalized, { workspace: parentWorkspace }),
 			childId,
 			maxTurns,
@@ -434,7 +401,7 @@ export async function runChildQuery(
 			ctx,
 			extensionFactory: options.extensionFactory,
 			sessionManager: finalizeSessionManager,
-			tools: [],
+			toolNames: [],
 			prompt: buildForcedFinalizePrompt({
 				prompt: normalized.prompt,
 				artifact,

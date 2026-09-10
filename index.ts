@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionFactory } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionFactory } from "@earendil-works/pi-coding-agent";
 import { createRlmExtensionFactory } from "./src/install.js";
 import type { RlmExtensionOptions } from "./src/types.js";
 
