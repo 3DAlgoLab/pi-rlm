@@ -1,16 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-09-10
 
 ### Changed
 
 - Migrated from `@mariozechner/*` to `@earendil-works/*` packages (pi-coding-agent 0.85.x): `typebox` replaces `@sinclair/typebox` for tool schemas.
 - Child `llmQuery` sessions now select built-in tools by name (`CreateAgentSessionOptions.tools` allowlist) and pass `agentDir` to `DefaultResourceLoader`.
 - Eval harness now uses `ModelRuntime` + in-memory `CredentialStore` instead of the removed `AuthStorage`/`ModelRegistry` APIs.
+- Distribution is git-only: README install paths use `git:github.com/3DAlgoLab/pi-rlm` (npm publishing dropped).
 
 ### Fixed
 
 - Documented the Pi CLI quirk where extension flags consume the following positional token: use `--rlm-enabled=true` or place the flag after the prompt.
+- Removed unused `safePreview`/`formatStats` helpers in `install.ts` flagged by the linter.
+
 ## [0.1.5] - 2026-04-07
 
 ### Added

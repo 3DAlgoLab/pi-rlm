@@ -1,6 +1,6 @@
 {
 	"name": "pi-turtle-rlm",
-	"version": "0.1.5",
+	"version": "0.2.0",
 	"description": "pi-turtle-rlm — RLM for Pi: persistent runtime, llmQuery recursion (it's models all the way down)",
 	"type": "module",
 	"main": "./dist/index.js",

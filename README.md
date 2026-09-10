@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jpstrikesback/pi-rlm/main/assets/turtle.svg" alt="Fractal LLM turtle logo" width="160" />
+  <img src="https://raw.githubusercontent.com/3DAlgoLab/pi-rlm/main/assets/turtle.svg" alt="Fractal LLM turtle logo" width="160" />
 </p>
 
 # pi-turtle-rlm
@@ -8,33 +8,26 @@
 
 > **[Turtles all the way down](https://arxiv.org/abs/2512.24601)** — each turtle is an `llmQuery` call, each shell is `globalThis`, base case `maxDepth`, or just run out of tokens.
 
-[![npm version](https://img.shields.io/npm/v/pi-turtle-rlm.svg)](https://www.npmjs.com/package/pi-turtle-rlm)
-[![License](https://img.shields.io/npm/l/pi-turtle-rlm.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](./LICENSE)
 
 ## Install
 
-**Recommended — Pi package manager** (see [Pi packages](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)):
+**From git** (see [Pi packages](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)):
 
 ```bash
-pi install npm:pi-turtle-rlm
+pi install git:github.com/3DAlgoLab/pi-rlm
 ```
 
-Pin a version:
+Pin a tag:
 
 ```bash
-pi install npm:pi-turtle-rlm@0.1.0
-```
-
-**From git:**
-
-```bash
-pi install git:github.com/jpstrikesback/pi-rlm
+pi install git:github.com/3DAlgoLab/pi-rlm@v0.2.0
 ```
 
 **From a local clone** (contributors or vendoring):
 
 ```bash
-git clone https://github.com/jpstrikesback/pi-rlm.git
+git clone https://github.com/3DAlgoLab/pi-rlm.git
 cd pi-rlm
 npm install
 npm run build
@@ -46,7 +39,7 @@ pi install ./
 
 ```json
 {
-	"packages": ["npm:pi-turtle-rlm"]
+  "packages": ["git:github.com/3DAlgoLab/pi-rlm"]
 }
 ```
 
@@ -66,6 +59,7 @@ Or enable it from the CLI for one-shot runs. Pass the flag **after** the prompt,
 pi -p --rlm-enabled=true "prompt"
 pi -p "prompt" --rlm-enabled
 ```
+
 When RLM is on you get a pink **RLM MODE** widget (with mode label) and footer stats: depth, `rlm_exec` count, child queries / turns, runtime variable count, and non-RLM tool calls (“leaf” count).
 
 ## Why RLM?
@@ -98,8 +92,8 @@ Or configure defaults:
 import { createRlmExtension } from "pi-turtle-rlm";
 
 export default createRlmExtension({
-	maxDepth: 3,
-	promptMode: "coordinator",
+ maxDepth: 3,
+ promptMode: "coordinator",
 });
 ```
 
@@ -113,10 +107,10 @@ Inside `rlm_exec`, the runtime also exposes `llmQuery(...)` for recursive child 
 
 ```ts
 await llmQuery({
-	prompt: "Analyze the auth module",
-	state: { files: globalThis.authFiles },
-	tools: "read-only",
-	budget: "medium",
+ prompt: "Analyze the auth module",
+ state: { files: globalThis.authFiles },
+ tools: "read-only",
+ budget: "medium",
 });
 ```
 
@@ -127,7 +121,7 @@ This project is inspired in part by AxLLM’s RLM ideas.
 ## Development
 
 ```bash
-git clone https://github.com/jpstrikesback/pi-rlm.git
+git clone https://github.com/3DAlgoLab/pi-rlm.git
 cd pi-rlm
 npm install
 npm test
